@@ -175,9 +175,26 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;touch-acti
 .yel:disabled{filter:grayscale(.6);opacity:.7}
 .yel:active{transform:translateY(3px);box-shadow:0 1px 0 #a87800}
 #authM.login .onlysign{display:none}
+
+.acct{display:flex;gap:8px;align-items:center}
+.acct .afr{position:relative;width:46px;height:46px;border-radius:50%;padding:0;border:0;cursor:pointer;background:#2a2a5a;box-shadow:0 0 0 3px #3b3a78,0 3px 0 3px #0a0820;display:flex;align-items:center;justify-content:center}
+.acct .afr svg{width:24px;height:24px;fill:#cfd6ff}
+.acct .bdg{position:absolute;top:-4px;right:-4px;min-width:20px;height:20px;border-radius:10px;background:#ff3b4a;color:#fff;font:700 12px/20px var(--ui);text-align:center;padding:0 5px;box-shadow:0 0 0 2px #0a0820}
+.addrow{display:grid;grid-template-columns:1fr auto;gap:6px}
+.addrow .mbtn{padding:8px 12px}
+.sec{font:700 13px var(--ui);color:#ffd21f;margin-top:2px}
+.llist.plain{min-height:0}
+.frrow{display:grid;grid-template-columns:40px 1fr auto auto;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid #26244f}
+.frrow .av{width:36px;height:36px;cursor:default}
+.frrow b{font:600 14px var(--ui);word-break:break-all}
+.frrow button{width:40px;height:36px;border:0;border-radius:10px;font:700 18px var(--ui);color:#fff;cursor:pointer}
+.frrow .ok{background:linear-gradient(#3fdc6e,#18a345);box-shadow:0 3px 0 #0b6a2a}
+.frrow .no{background:linear-gradient(#ff6a55,#e0343a);box-shadow:0 3px 0 #8f1620}
+.frlist{display:grid;grid-template-columns:40px 1fr;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid #26244f}
+.frlist .av{width:36px;height:36px;cursor:default}
 </style>
 
-<div class="devtag" aria-label="รุ่นทดสอบ">development build <i>· v82</i></div>
+<div class="devtag" aria-label="รุ่นทดสอบ">development build <i>· v83</i></div>
 <main class="stage" id="stage">
   <canvas id="game" aria-label="สนามต่อสู้"></canvas>
   <div class="veil" id="veil">
@@ -253,6 +270,16 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;touch-acti
   <p class="mstat" id="fS">ทั้งสองคนต้องกรอกรหัสของอีกฝ่ายพร้อมกัน</p>
   <button type="button" class="yel" id="fGo">ยืนยันและค้นหา</button>
   <div class="mrow" style="grid-template-columns:1fr"><button type="button" class="mno" id="fX">ปิด</button></div>
+</div></div>
+<div class="mdl" id="frM" hidden><div class="mbox wide" role="dialog" aria-label="เพื่อน">
+  <h3>เพื่อน</h3>
+  <label>เพิ่มเพื่อนด้วยรหัส 6 ตัว<span class="addrow"><input id="frIn" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="เช่น K7M2QX"><button type="button" class="mbtn" id="frAdd">ส่งคำขอ</button></span></label>
+  <p class="mstat" id="frS"></p>
+  <div class="sec" id="frReqH" hidden>คำขอเป็นเพื่อน</div>
+  <div class="llist plain" id="frReq" hidden></div>
+  <div class="sec">เพื่อนของฉัน</div>
+  <div class="llist" id="frList"><div class="lempty">ยังไม่มีเพื่อน</div></div>
+  <div class="mrow" style="grid-template-columns:1fr"><button type="button" class="mno" id="frX">ปิด</button></div>
 </div></div>
 <button type="button" class="onx" id="onx" hidden>✕ ออกจากเกม</button>
 
@@ -1576,11 +1603,11 @@ tmenu.addEventListener('click',e=>{
 });
 /* ---------- account + online ---------- */
 const acctEl=$('acct'),authM=$('authM'),profM=$('profM'),mchM=$('mchM'),frdM=$('frdM'),onxBtn=$('onx');
-let meUser=null,authTab='login',pendingMode=null,netBound=false,findBusy=false,unWatch=null;
+let reqs={},unReq=null,frTimer=null,meUser=null,authTab='login',pendingMode=null,netBound=false,findBusy=false,unWatch=null;
 function toast(s,ms){ttoast.textContent=s;ttoast.hidden=false;clearTimeout(ttoast._t);ttoast._t=setTimeout(()=>ttoast.hidden=true,ms||2200)}
 function bindNet(){
   if(netBound||!window.NET)return netBound;
-  netBound=true;NET.onAuth(u=>{meUser=u;drawAcct()});return true;
+  netBound=true;NET.onAuth(u=>{meUser=u;watchReq();drawAcct()});return true;
 }
 setInterval(bindNet,400);
 function setAv(el,url){
@@ -1590,15 +1617,21 @@ function setAv(el,url){
 function drawAcct(){
   acctEl.textContent='';
   const b=document.createElement('button');b.type='button';
-  if(meUser){b.className='av aav';b.id='aAv';b.setAttribute('aria-label','โปรไฟล์');setAv(b,meUser.avatar)}
-  else{b.id='aIn';b.textContent='เข้าสู่ระบบ / สมัครสมาชิก'}
-  acctEl.append(b);
+  if(meUser){
+    const f=document.createElement('button');f.type='button';f.className='afr';f.id='aFr';f.setAttribute('aria-label','เพื่อน');
+    f.innerHTML='<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c.4-4 3-6 6.5-6s6.1 2 6.5 6z"/><circle cx="17.2" cy="9" r="2.6"/><path d="M16.5 14.2c3 .1 4.7 1.7 5 5.1h-4.6c-.1-2-.5-3.6-1.5-4.700z"/></svg>';
+    const n=Object.keys(reqs).length;
+    if(n){const d=document.createElement('span');d.className='bdg';d.textContent=String(n);f.append(d)}
+    b.className='av aav';b.id='aAv';b.setAttribute('aria-label','โปรไฟล์');setAv(b,meUser.avatar);
+    acctEl.append(f,b);
+  }else{b.id='aIn';b.textContent='เข้าสู่ระบบ / สมัครสมาชิก';acctEl.append(b)}
 }
 drawAcct();
 acctEl.addEventListener('click',e=>{
   const t=e.target.closest('button');if(!t)return;
   if(t.id==='aIn'){if(!window.NET)return toast('ยังเชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (ต้องเปิดผ่านลิงก์เว็บ)',2800);bindNet();openAuth('login')}
   if(t.id==='aAv')openProfile();
+  if(t.id==='aFr')openFriends();
 });
 /* auth */
 function setTab(t){
@@ -1635,7 +1668,7 @@ async function doAuth(){
   btn.disabled=true;const old=btn.textContent;btn.textContent='รอสักครู่...';
   try{
     const user=authTab==='login'?await NET.login(em,p):await NET.signup(n,em,p);
-    meUser=user;drawAcct();authM.hidden=true;$('aP').value='';$('aP2').value='';
+    meUser=user;watchReq();drawAcct();authM.hidden=true;$('aP').value='';$('aP2').value='';
     toast('ยินดีต้อนรับ '+user.name);
     if(pendingMode){const m=pendingMode;pendingMode=null;onlineEntry(m)}
   }catch(e){err.textContent=netErr(e)}
@@ -1750,6 +1783,56 @@ $('fGo').addEventListener('click',async()=>{
 });
 $('fIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('fGo').click()}});
 
+
+/* ---------- friends ---------- */
+const frM=$('frM');
+function watchReq(){
+  if(unReq){try{unReq()}catch(e){}unReq=null}
+  if(!meUser||!window.NET){reqs={};return}
+  try{unReq=NET.watchRequests(q=>{reqs=q||{};drawAcct();if(!frM.hidden)drawReqs()})}catch(e){}
+}
+function rowAv(v){const a=document.createElement('div');a.className='av';setAv(a,v.avatar);return a}
+const cleanN=s=>String(s||'?').replace(/[^\w]/g,'').slice(0,14)||'?';
+function drawReqs(){
+  const L=$('frReq'),H=$('frReqH'),ids=Object.keys(reqs);
+  L.textContent='';H.hidden=L.hidden=!ids.length;
+  ids.forEach(u=>{
+    const v=reqs[u]||{},r=document.createElement('div');r.className='frrow';
+    const nm=document.createElement('b');nm.textContent=cleanN(v.name);
+    const ok=document.createElement('button');ok.type='button';ok.className='ok';ok.textContent='✓';ok.setAttribute('aria-label','รับเป็นเพื่อน');
+    const no=document.createElement('button');no.type='button';no.className='no';no.textContent='✕';no.setAttribute('aria-label','ปฏิเสธ');
+    const act=async a=>{ok.disabled=no.disabled=true;try{await NET.respond(u,a);if(a)toast('เป็นเพื่อนกับ '+cleanN(v.name)+' แล้ว');loadFr()}catch(e){$('frS').textContent=netErr(e);ok.disabled=no.disabled=false}};
+    ok.addEventListener('click',()=>act(true));no.addEventListener('click',()=>act(false));
+    r.append(rowAv(v),nm,ok,no);L.append(r);
+  });
+}
+async function loadFr(){
+  if(!meUser||!window.NET)return;
+  try{
+    const list=await NET.loadFriends(),L=$('frList');L.textContent='';
+    if(!list.length){const d=document.createElement('div');d.className='lempty';d.textContent='ยังไม่มีเพื่อน';L.append(d);return}
+    list.forEach(v=>{const r=document.createElement('div');r.className='frlist';const nm=document.createElement('b');nm.textContent=cleanN(v.name);r.append(rowAv(v),nm);L.append(r)});
+  }catch(e){$('frS').textContent=netErr(e)}
+}
+function openFriends(){
+  if(!meUser)return;
+  frM.hidden=false;$('frS').textContent='';drawReqs();loadFr();
+  clearInterval(frTimer);frTimer=setInterval(()=>{if(frM.hidden)clearInterval(frTimer);else loadFr()},7000);
+}
+$('frX').addEventListener('click',()=>{frM.hidden=true;clearInterval(frTimer)});
+$('frAdd').addEventListener('click',async()=>{
+  const S=$('frS'),code=$('frIn').value.trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(code))return S.textContent='รหัสเพื่อนมี 6 ตัว';
+  if(code===meUser.code)return S.textContent='นั่นคือรหัสของนายเอง';
+  $('frAdd').disabled=true;S.textContent='กำลังส่งคำขอ...';
+  try{
+    const info=await NET.codeInfo(code);
+    if(!info)S.textContent='ไม่พบรหัสนี้';
+    else{const r=await NET.sendRequest(info.uid,info.name);S.textContent=r==='already'?'เป็นเพื่อนกันอยู่แล้ว':'ส่งคำขอถึง '+cleanN(info.name)+' แล้ว รอเขารับ';$('frIn').value=''}
+  }catch(e){S.textContent=netErr(e)}
+  $('frAdd').disabled=false;
+});
+$('frIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('frAdd').click()}});
 /* ---- online match ---- */
 const MVNAME=m=>{for(const k in MOVES)if(MOVES[k]===m)return k;return 0};
 function startOnline(r){
@@ -1959,6 +2042,44 @@ window.NET={
   findMatch,
   cancel(){cancelled=true},
   now,
+  async sendRequest(toUid,toName){
+    if(!user)throw new Error('not logged in');
+    if(toUid===user.uid)throw new Error('self');
+    const f=(await get(ref(db,'users/'+user.uid+'/friends/'+toUid))).val();
+    if(f)return 'already';
+    await set(ref(db,'friendReq/'+toUid+'/'+user.uid),{name:user.name,avatar:user.avatar||'',t:Date.now()});
+    await set(ref(db,'users/'+user.uid+'/sent/'+toUid),true);
+    return 'sent';
+  },
+  watchRequests(cb){
+    if(!user)return()=>{};
+    return onValue(ref(db,'friendReq/'+user.uid),s=>cb(s.val()||{}),()=>cb({}));
+  },
+  async respond(fromUid,accept){
+    if(accept)await set(ref(db,'users/'+user.uid+'/friends/'+fromUid),true);
+    await remove(ref(db,'friendReq/'+user.uid+'/'+fromUid));
+  },
+  async loadFriends(){
+    if(!user)return[];
+    const me=user.uid;
+    const sent=(await get(ref(db,'users/'+me+'/sent'))).val()||{};
+    for(const to in sent){
+      try{
+        const ok=(await get(ref(db,'users/'+to+'/friends/'+me))).val();
+        if(ok){await set(ref(db,'users/'+me+'/friends/'+to),true);await remove(ref(db,'users/'+me+'/sent/'+to))}
+        else{
+          const pend=(await get(ref(db,'friendReq/'+to+'/'+me))).val();
+          if(!pend)await remove(ref(db,'users/'+me+'/sent/'+to));
+        }
+      }catch(e){}
+    }
+    const fr=(await get(ref(db,'users/'+me+'/friends'))).val()||{};
+    const out=[];
+    for(const u in fr){
+      try{const p=(await get(ref(db,'users/'+u))).val();if(p)out.push({uid:u,name:p.name||'?',avatar:p.avatar||''})}catch(e){}
+    }
+    return out;
+  },
   watchQueue(cb){return onValue(ref(db,'queue'),s=>cb(s.val()||{}),()=>cb({}))},
   async setAvatar(d){if(!user)throw new Error('not logged in');await set(ref(db,'users/'+user.uid+'/avatar'),d);user.avatar=d},
   async codeInfo(code){
