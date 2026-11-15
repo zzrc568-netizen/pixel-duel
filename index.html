@@ -192,9 +192,23 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;touch-acti
 .frrow .no{background:linear-gradient(#ff6a55,#e0343a);box-shadow:0 3px 0 #8f1620}
 .frlist{display:grid;grid-template-columns:40px 1fr;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid #26244f}
 .frlist .av{width:36px;height:36px;cursor:default}
+@media (orientation:portrait){.onx{top:calc(env(safe-area-inset-top,0px) + 240px);left:auto;right:8px}}
+@media (orientation:landscape){.onx{top:auto;left:50%;transform:translateX(-50%);bottom:max(30px,env(safe-area-inset-bottom))}}
+
+.mcode.small{font-size:20px;padding:6px}
+.fgrid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;min-height:110px;align-content:center;padding:6px 0}
+.fgrid[hidden]{display:none}
+.fbtn{background:none;border:0;color:#fff;cursor:pointer;display:grid;gap:4px;justify-items:center;width:84px;font:600 13px var(--ui)}
+.fbtn .av{width:68px;height:68px;box-shadow:0 0 0 3px #3b3a78;cursor:pointer;opacity:.55}
+.fbtn.on .av{box-shadow:0 0 0 4px #3fdc6e;opacity:1}
+.fbtn small{color:#8d93c4;font-size:11px}
+.fbtn.on small{color:#6df08f}
+.frpair{display:grid;grid-template-columns:40px 40px 1fr;gap:6px;align-items:center;padding:6px 10px;border-bottom:1px solid #26244f}
+.frpair .av{width:38px;height:38px;cursor:default}
+.frpair .av+.av{margin-left:-18px;box-shadow:0 0 0 2px #0e0c2a}
 </style>
 
-<div class="devtag" aria-label="รุ่นทดสอบ">development build <i>· v83</i></div>
+<div class="devtag" aria-label="รุ่นทดสอบ">development build <i>· v85</i></div>
 <main class="stage" id="stage">
   <canvas id="game" aria-label="สนามต่อสู้"></canvas>
   <div class="veil" id="veil">
@@ -254,28 +268,24 @@ canvas{display:block;width:100%;height:100%;image-rendering:pixelated;touch-acti
   <button type="button" class="yel" id="mGo">ค้นหาคู่ต่อสู้</button>
   <div class="mrow" style="grid-template-columns:1fr"><button type="button" class="mno" id="mX">ปิด</button></div>
 </div></div>
-<div class="mdl" id="frdM" hidden><div class="mbox" role="dialog" aria-label="เล่นกับเพื่อน">
+<div class="mdl" id="frdM" hidden><div class="mbox wide" role="dialog" aria-label="เล่นกับเพื่อน">
   <h3>Play with friends</h3>
-  <div id="fForm">
-    <label>รหัสเพื่อนของนาย (ส่งให้เพื่อน)</label>
-    <div class="mcode" id="fCode">------</div>
-    <button type="button" class="mbtn gray" id="fCopy" style="margin:8px 0">คัดลอกรหัส</button>
-    <label>ใส่รหัสของเพื่อนเพื่อยืนยัน<input id="fIn" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="เช่น K7M2QX"></label>
-  </div>
+  <div id="fGrid" class="fgrid"></div>
   <div class="vs" id="fVs" hidden>
     <div class="vside"><div class="av vbig" id="fvMe"></div><b id="fvMeN">-</b></div>
     <div class="vmid">VS</div>
     <div class="vside"><div class="av vbig scan" id="fvOp"><span>?</span></div><b id="fvOpN">-</b></div>
   </div>
-  <p class="mstat" id="fS">ทั้งสองคนต้องกรอกรหัสของอีกฝ่ายพร้อมกัน</p>
-  <button type="button" class="yel" id="fGo">ยืนยันและค้นหา</button>
+  <p class="mstat" id="fS"></p>
   <div class="mrow" style="grid-template-columns:1fr"><button type="button" class="mno" id="fX">ปิด</button></div>
 </div></div>
 <div class="mdl" id="frM" hidden><div class="mbox wide" role="dialog" aria-label="เพื่อน">
   <h3>เพื่อน</h3>
-  <label>เพิ่มเพื่อนด้วยรหัส 6 ตัว<span class="addrow"><input id="frIn" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="เช่น K7M2QX"><button type="button" class="mbtn" id="frAdd">ส่งคำขอ</button></span></label>
+  <label>รหัสของฉัน (ส่งให้เพื่อนไปแอด)</label>
+  <div class="mcode small" id="myCode">------</div>
+  <label>ใส่รหัสเพื่อนแล้วกดแอด<span class="addrow"><input id="frIn" maxlength="6" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="เช่น K7M2QX"><button type="button" class="mbtn" id="frAdd">แอด</button></span></label>
   <p class="mstat" id="frS"></p>
-  <div class="sec" id="frReqH" hidden>คำขอเป็นเพื่อน</div>
+  <div class="sec" id="frReqH" hidden>มีคนขอเป็นเพื่อน</div>
   <div class="llist plain" id="frReq" hidden></div>
   <div class="sec">เพื่อนของฉัน</div>
   <div class="llist" id="frList"><div class="lempty">ยังไม่มีเพื่อน</div></div>
@@ -1603,7 +1613,7 @@ tmenu.addEventListener('click',e=>{
 });
 /* ---------- account + online ---------- */
 const acctEl=$('acct'),authM=$('authM'),profM=$('profM'),mchM=$('mchM'),frdM=$('frdM'),onxBtn=$('onx');
-let reqs={},unReq=null,frTimer=null,meUser=null,authTab='login',pendingMode=null,netBound=false,findBusy=false,unWatch=null;
+let fList=[],fOnline={},unFW=null,callerBusy=false,reqs={},unReq=null,frTimer=null,meUser=null,authTab='login',pendingMode=null,netBound=false,findBusy=false,unWatch=null;
 function toast(s,ms){ttoast.textContent=s;ttoast.hidden=false;clearTimeout(ttoast._t);ttoast._t=setTimeout(()=>ttoast.hidden=true,ms||2200)}
 function bindNet(){
   if(netBound||!window.NET)return netBound;
@@ -1730,7 +1740,7 @@ function vsShow(pre,opName,opAv,found){
 function drawLobby(q){
   const L=$('mList');L.textContent='';
   const now=NET.now?NET.now():Date.now();
-  const rows=Object.keys(q||{}).map(u=>({u,...q[u]})).filter(v=>v&&typeof v.hb==='number'&&now-v.hb<20000&&!v.want&&(!meUser||v.u!==meUser.uid)).sort((a,b)=>a.j-b.j);
+  const rows=Object.keys(q||{}).map(u=>({u,...q[u]})).filter(v=>v&&typeof v.hb==='number'&&now-v.hb<20000&&!v.want&&!v.fl&&(!meUser||v.u!==meUser.uid)).sort((a,b)=>a.j-b.j);
   if(!rows.length){const d=document.createElement('div');d.className='lempty';d.textContent='ยังไม่มีใครรอ กดปุ่มสีเหลืองเพื่อเป็นคนแรก';L.append(d);return}
   rows.forEach((v,i)=>{
     const r=document.createElement('div');r.className='lrow';
@@ -1755,36 +1765,64 @@ $('mGo').addEventListener('click',async()=>{
   else{if($('mS').textContent.indexOf('ผิดพลาด')<0)$('mS').textContent='ยังไม่เจอผู้เล่น ลองใหม่อีกครั้งภายหลัง';$('mGo').disabled=false;$('mVs').hidden=true;$('mLobby').hidden=false;try{unWatch=NET.watchQueue(drawLobby)}catch(e){}}
 });
 $('mX').addEventListener('click',()=>{mchM.hidden=true;stopWatch();try{NET.cancel()}catch(e){}});
-/* friend */
-function openFriend(){
-  frdM.hidden=false;$('fCode').textContent=meUser.code;$('fIn').value='';
-  $('fForm').hidden=false;$('fVs').hidden=true;$('fGo').disabled=false;
-  $('fS').textContent='ทั้งสองคนต้องกรอกรหัสของอีกฝ่ายพร้อมกัน';
+/* friend play: friends as circles */
+const sl=ms=>new Promise(r=>setTimeout(r,ms));
+const cleanN=s=>String(s||'?').replace(/[^\w]/g,'').slice(0,14)||'?';
+function drawFGrid(){
+  const G=$('fGrid');G.textContent='';
+  if(!fList.length){const d=document.createElement('div');d.className='lempty';d.textContent='ยังไม่มีเพื่อน ไปแอดเพื่อนที่ปุ่มรูปคนสองคนก่อน';G.append(d);return}
+  fList.forEach(f=>{
+    const b=document.createElement('button');b.type='button';b.className='fbtn'+(fOnline[f.uid]?' on':'');
+    const a=document.createElement('div');a.className='av';setAv(a,f.avatar);
+    const n=document.createElement('span');n.textContent=cleanN(f.name);
+    const s=document.createElement('small');s.textContent=fOnline[f.uid]?'พร้อมเล่น':'ยังไม่ออนไลน์';
+    b.append(a,n,s);b.addEventListener('click',()=>callFriend(f));G.append(b);
+  });
 }
-$('fCopy').addEventListener('click',async()=>{
-  try{await navigator.clipboard.writeText(meUser.code);$('fS').textContent='คัดลอกรหัสแล้ว'}catch(e){$('fS').textContent='คัดลอกไม่ได้ จดรหัสนี้ส่งให้เพื่อนได้เลย'}
-});
-$('fX').addEventListener('click',()=>{frdM.hidden=true;try{NET.cancel()}catch(e){}});
-$('fGo').addEventListener('click',async()=>{
-  const S=$('fS'),code=$('fIn').value.trim().toUpperCase();
-  if(!/^[A-Z0-9]{6}$/.test(code))return S.textContent='รหัสเพื่อนมี 6 ตัว';
-  if(code===meUser.code)return S.textContent='นั่นคือรหัสของนายเอง ต้องใช้รหัสของเพื่อน';
-  $('fGo').disabled=true;S.textContent='กำลังตรวจรหัส...';
-  let info=null;
-  try{info=await NET.codeInfo(code)}catch(e){S.textContent=netErr(e);$('fGo').disabled=false;return}
-  if(!info){S.textContent='ไม่พบรหัสนี้ ตรวจสอบอีกครั้ง';$('fGo').disabled=false;return}
-  $('fForm').hidden=true;$('fVs').hidden=false;
-  vsShow('fv',info.name,info.avatar,true);$('fvOp').classList.add('scan');$('fvOp').classList.remove('found');
-  S.textContent='กำลังค้นหา '+info.name+'... ให้เพื่อนกรอกรหัสของนายด้วย (รอได้ 2 นาที)';
-  const r=await runFind(info.uid,t=>S.textContent=t);
+function stopFW(){if(unFW){try{unFW()}catch(e){}unFW=null}}
+async function loadFList(){try{fList=await NET.loadFriends()}catch(e){$('fS').textContent=netErr(e)}}
+async function startLobby(){
+  if(findBusy||callerBusy)return;
+  findBusy=true;let r=null;
+  try{r=await NET.findMatch('*')}catch(e){$('fS').textContent=netErr(e)}
+  findBusy=false;
+  if(r&&!frdM.hidden&&!callerBusy)foundFriend(r);
+}
+function foundFriend(r){
+  stopFW();$('fGrid').hidden=true;$('fVs').hidden=false;
+  vsShow('fv',cleanN(r.oppName),r.oppAvatar,true);$('fS').textContent='เจอเพื่อนแล้ว! กำลังเข้าเกม...';
+  setTimeout(()=>{if(!frdM.hidden)startOnline(r)},1400);
+}
+async function openFriend(){
+  frdM.hidden=false;$('fVs').hidden=true;$('fGrid').hidden=false;$('fS').textContent='';
+  await loadFList();drawFGrid();
+  stopFW();try{unFW=NET.watchQueue(q=>{
+    fOnline={};const now=NET.now?NET.now():Date.now();
+    for(const u in q){const v=q[u];if(v&&v.fl===1&&typeof v.hb==='number'&&now-v.hb<20000)fOnline[u]=1}
+    if(!$('fGrid').hidden)drawFGrid();
+  })}catch(e){}
+  startLobby();
+}
+async function callFriend(f){
+  if(callerBusy)return;callerBusy=true;
+  try{NET.cancel()}catch(e){}
+  for(let i=0;i<50&&findBusy;i++)await sl(100);
+  $('fGrid').hidden=true;$('fVs').hidden=false;
+  vsShow('fv',cleanN(f.name),f.avatar,true);$('fvOp').classList.add('scan');$('fvOp').classList.remove('found');
+  $('fS').textContent='กำลังเรียก '+cleanN(f.name)+'... ให้เพื่อนเปิดโหมด Play with friends (รอได้ 2 นาที)';
+  findBusy=true;let r=null;
+  try{r=await NET.findMatch(f.uid)}catch(e){$('fS').textContent=netErr(e)}
+  findBusy=false;callerBusy=false;
   if(frdM.hidden)return;
-  if(r){vsShow('fv',r.oppName,r.oppAvatar||info.avatar,true);S.textContent='เจอเพื่อนแล้ว!';setTimeout(()=>{if(!frdM.hidden)startOnline(r)},1600)}
-  else{if(S.textContent.indexOf('ผิดพลาด')<0)S.textContent='เพื่อนยังไม่เข้ามา ลองใหม่อีกครั้ง';$('fForm').hidden=false;$('fVs').hidden=true;$('fGo').disabled=false}
-});
-$('fIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('fGo').click()}});
+  if(r){foundFriend(r)}
+  else{
+    if($('fS').textContent.indexOf('ผิดพลาด')<0&&$('fS').textContent.indexOf('ไม่มีสิทธิ์')<0)$('fS').textContent='เพื่อนยังไม่เข้ามา ลองใหม่อีกครั้ง';
+    $('fVs').hidden=true;$('fGrid').hidden=false;drawFGrid();startLobby();
+  }
+}
+$('fX').addEventListener('click',()=>{frdM.hidden=true;stopFW();try{NET.cancel()}catch(e){}});
 
-
-/* ---------- friends ---------- */
+/* ---------- friends page ---------- */
 const frM=$('frM');
 function watchReq(){
   if(unReq){try{unReq()}catch(e){}unReq=null}
@@ -1792,7 +1830,6 @@ function watchReq(){
   try{unReq=NET.watchRequests(q=>{reqs=q||{};drawAcct();if(!frM.hidden)drawReqs()})}catch(e){}
 }
 function rowAv(v){const a=document.createElement('div');a.className='av';setAv(a,v.avatar);return a}
-const cleanN=s=>String(s||'?').replace(/[^\w]/g,'').slice(0,14)||'?';
 function drawReqs(){
   const L=$('frReq'),H=$('frReqH'),ids=Object.keys(reqs);
   L.textContent='';H.hidden=L.hidden=!ids.length;
@@ -1800,7 +1837,7 @@ function drawReqs(){
     const v=reqs[u]||{},r=document.createElement('div');r.className='frrow';
     const nm=document.createElement('b');nm.textContent=cleanN(v.name);
     const ok=document.createElement('button');ok.type='button';ok.className='ok';ok.textContent='✓';ok.setAttribute('aria-label','รับเป็นเพื่อน');
-    const no=document.createElement('button');no.type='button';no.className='no';no.textContent='✕';no.setAttribute('aria-label','ปฏิเสธ');
+    const no=document.createElement('button');no.type='button';no.className='no';no.textContent='✕';no.setAttribute('aria-label','ไม่รับ');
     const act=async a=>{ok.disabled=no.disabled=true;try{await NET.respond(u,a);if(a)toast('เป็นเพื่อนกับ '+cleanN(v.name)+' แล้ว');loadFr()}catch(e){$('frS').textContent=netErr(e);ok.disabled=no.disabled=false}};
     ok.addEventListener('click',()=>act(true));no.addEventListener('click',()=>act(false));
     r.append(rowAv(v),nm,ok,no);L.append(r);
@@ -1809,14 +1846,18 @@ function drawReqs(){
 async function loadFr(){
   if(!meUser||!window.NET)return;
   try{
-    const list=await NET.loadFriends(),L=$('frList');L.textContent='';
+    const list=await NET.loadFriends(),L=$('frList');L.textContent='';fList=list;
     if(!list.length){const d=document.createElement('div');d.className='lempty';d.textContent='ยังไม่มีเพื่อน';L.append(d);return}
-    list.forEach(v=>{const r=document.createElement('div');r.className='frlist';const nm=document.createElement('b');nm.textContent=cleanN(v.name);r.append(rowAv(v),nm);L.append(r)});
+    list.forEach(v=>{
+      const r=document.createElement('div');r.className='frpair';
+      const nm=document.createElement('b');nm.textContent=cleanN(v.name);
+      r.append(rowAv(meUser),rowAv(v),nm);L.append(r);
+    });
   }catch(e){$('frS').textContent=netErr(e)}
 }
 function openFriends(){
   if(!meUser)return;
-  frM.hidden=false;$('frS').textContent='';drawReqs();loadFr();
+  frM.hidden=false;$('frS').textContent='';$('myCode').textContent=meUser.code;drawReqs();loadFr();
   clearInterval(frTimer);frTimer=setInterval(()=>{if(frM.hidden)clearInterval(frTimer);else loadFr()},7000);
 }
 $('frX').addEventListener('click',()=>{frM.hidden=true;clearInterval(frTimer)});
@@ -1828,7 +1869,7 @@ $('frAdd').addEventListener('click',async()=>{
   try{
     const info=await NET.codeInfo(code);
     if(!info)S.textContent='ไม่พบรหัสนี้';
-    else{const r=await NET.sendRequest(info.uid,info.name);S.textContent=r==='already'?'เป็นเพื่อนกันอยู่แล้ว':'ส่งคำขอถึง '+cleanN(info.name)+' แล้ว รอเขารับ';$('frIn').value=''}
+    else{const r=await NET.sendRequest(info.uid);S.textContent=r==='already'?'เป็นเพื่อนกันอยู่แล้ว':'ส่งคำขอถึง '+cleanN(info.name)+' แล้ว รอเขากดรับ';$('frIn').value=''}
   }catch(e){S.textContent=netErr(e)}
   $('frAdd').disabled=false;
 });
@@ -1836,7 +1877,7 @@ $('frIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();
 /* ---- online match ---- */
 const MVNAME=m=>{for(const k in MOVES)if(MOVES[k]===m)return k;return 0};
 function startOnline(r){
-  mchM.hidden=true;frdM.hidden=true;profM.hidden=true;stopWatch();
+  mchM.hidden=true;frdM.hidden=true;profM.hidden=true;frM.hidden=true;stopWatch();try{stopFW()}catch(e){}
   const nm=s=>String(s||'?').replace(/[^\w]/g,'').slice(0,14)||'?';
   const slot=r.slot===1?1:2;
   const me=mkF(slot===1?100:220,slot===1?1:-1,'b'),op=mkF(slot===1?220:100,slot===1?-1:1,'b');
@@ -1996,20 +2037,25 @@ async function login(email,pw){
 }
 async function findMatch(want){
   cancelled=false;
+  const lobby=want==='*';
+  let myF=new Set();
+  if(lobby){try{const fr=(await get(ref(db,'users/'+auth.currentUser.uid+'/friends'))).val()||{};myF=new Set(Object.keys(fr))}catch(e){}}
   const me=auth.currentUser.uid,qref=ref(db,'queue/'+me);
-  await set(qref,{j:serverTimestamp(),hb:serverTimestamp(),name:user.name,avatar:user.avatar||'',want:want||null});
+  await set(qref,{j:serverTimestamp(),hb:serverTimestamp(),name:user.name,avatar:user.avatar||'',want:(want&&!lobby)?want:null,fl:lobby?1:0});
   onDisconnect(qref).remove();
   hb=setInterval(()=>{update(qref,{hb:serverTimestamp()}).catch(()=>{})},4000);
   try{
     const mine=(await get(qref)).val();
     const t0=Date.now();
-    while(!cancelled&&Date.now()-t0<120000){
+    while(!cancelled&&Date.now()-t0<(lobby?900000:120000)){
       const q=(await get(ref(db,'queue'))).val()||{};
       let best=null;
       for(const uid in q){
         const v=q[uid];
         if(uid===me||!v||typeof v.hb!=='number'||now()-v.hb>20000)continue;
-        if(want){if(uid!==want||v.want!==me)continue}else if(v.want)continue;
+        if(lobby){if(v.want!==me||!myF.has(uid))continue}
+        else if(want){if(uid!==want||!(v.fl===1||v.want===me))continue}
+        else if(v.want||v.fl)continue;
         if(!best||v.j<best.v.j)best={uid,v};
       }
       if(best){
@@ -2042,7 +2088,11 @@ window.NET={
   findMatch,
   cancel(){cancelled=true},
   now,
-  async sendRequest(toUid,toName){
+  watchRequests(cb){
+    if(!user)return()=>{};
+    return onValue(ref(db,'friendReq/'+user.uid),s=>cb(s.val()||{}),()=>cb({}));
+  },
+  async sendRequest(toUid){
     if(!user)throw new Error('not logged in');
     if(toUid===user.uid)throw new Error('self');
     const f=(await get(ref(db,'users/'+user.uid+'/friends/'+toUid))).val();
@@ -2050,10 +2100,6 @@ window.NET={
     await set(ref(db,'friendReq/'+toUid+'/'+user.uid),{name:user.name,avatar:user.avatar||'',t:Date.now()});
     await set(ref(db,'users/'+user.uid+'/sent/'+toUid),true);
     return 'sent';
-  },
-  watchRequests(cb){
-    if(!user)return()=>{};
-    return onValue(ref(db,'friendReq/'+user.uid),s=>cb(s.val()||{}),()=>cb({}));
   },
   async respond(fromUid,accept){
     if(accept)await set(ref(db,'users/'+user.uid+'/friends/'+fromUid),true);
@@ -2067,10 +2113,7 @@ window.NET={
       try{
         const ok=(await get(ref(db,'users/'+to+'/friends/'+me))).val();
         if(ok){await set(ref(db,'users/'+me+'/friends/'+to),true);await remove(ref(db,'users/'+me+'/sent/'+to))}
-        else{
-          const pend=(await get(ref(db,'friendReq/'+to+'/'+me))).val();
-          if(!pend)await remove(ref(db,'users/'+me+'/sent/'+to));
-        }
+        else{const pend=(await get(ref(db,'friendReq/'+to+'/'+me))).val();if(!pend)await remove(ref(db,'users/'+me+'/sent/'+to))}
       }catch(e){}
     }
     const fr=(await get(ref(db,'users/'+me+'/friends'))).val()||{};
